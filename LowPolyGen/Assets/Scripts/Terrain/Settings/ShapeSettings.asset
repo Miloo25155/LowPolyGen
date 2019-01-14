@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   xSize: 105
   zSize: 105
-  levelOfDetail: 1
+  resolution: 1
   flatMesh: 0
   flatShading: 1
-  heightMultiplicator: 30
+  heightMultiplicator: 32.67
   noiseSettings:
-    scale: 47.2
+    scale: 53
     octaves: 10
-    lacunarity: 3.8
-    persistence: 0.15
+    lacunarity: 4
+    persistence: 0.13

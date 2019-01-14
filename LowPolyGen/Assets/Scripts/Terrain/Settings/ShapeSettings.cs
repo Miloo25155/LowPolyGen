@@ -8,8 +8,8 @@ public class ShapeSettings : ScriptableObject
     public int xSize = 100;
     public int zSize = 100;
 
-    [Range(1, 4)]
-    public int levelOfDetail = 1;
+    [Range(1, 10)]
+    public int resolution = 1;
 
     public bool flatMesh = false;
     public bool flatShading = false;

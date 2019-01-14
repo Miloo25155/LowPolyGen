@@ -6,7 +6,7 @@ public class MeshGenerator
 {
     int xSize;
     int zSize;
-    int levelOfDetail;
+    int resolution;
 
     float heightMultiplicator;
 
@@ -18,7 +18,7 @@ public class MeshGenerator
     {
         this.xSize = settings.xSize;
         this.zSize = settings.zSize;
-        this.levelOfDetail = settings.levelOfDetail;
+        this.resolution = settings.resolution;
         this.heightMultiplicator = settings.heightMultiplicator;
 
         elevationMinMax = new MinMax();
@@ -27,6 +27,8 @@ public class MeshGenerator
 
     public Mesh GenerateMesh(bool flatMesh)
     {
+        //implement resolution here : equivalent to grid cell size
+
         float topLeftX = (xSize - 1) / -2f;
         float topLeftZ = (zSize - 1) / 2f;
 
