@@ -1,32 +1,35 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
     public float walkSpeed;
     public float runSpeed;
 
     public float gravity = -10f;
+    public float jumpHeight = 2f;
 
-    Vector3 moveAmount;
-    Vector3 smoothMoveVelocity;
-    public float smoothMoveTime = 0.2f;
+    [Range(0,1)]
+    public float airControlPercent;
+
+    public float speedSmoothTime = 0.2f;
+    float speedSmoothVelocity;
+    float currentSpeed;
+    float velocityY;
 
     float smoothRotationVelocity;
     public float smoothRotationTime = 0.2f;
 
-    Rigidbody rigidbody;
     Transform cameraT;
+    CharacterController controller;
 
     void Start()
     {
-        rigidbody = GetComponent<Rigidbody>();
-        rigidbody.useGravity = false;
-        rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-
         cameraT = Camera.main.transform;
+        controller = GetComponent<CharacterController>();
     }
 
     // Update is called once per frame
@@ -35,22 +38,56 @@ public class PlayerController : MonoBehaviour
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         Vector2 inputDir = input.normalized;
 
+        bool running = Input.GetKey(KeyCode.LeftShift);
+        Move(inputDir, running);
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Jump();
+        }
+    }
+
+    private void Move(Vector2 inputDir, bool running){
         if (inputDir != Vector2.zero)
         {
             float targetRotation = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
-            transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref smoothRotationVelocity, smoothRotationTime);
+            transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref smoothRotationVelocity, GetModifiedSmoothTime(smoothRotationTime));
         }
 
-        bool running = Input.GetKey(KeyCode.LeftShift);
         float targetSpeed = (running ? runSpeed : walkSpeed) * inputDir.magnitude;
-        Vector3 targetMoveAmount = inputDir * targetSpeed;
+        currentSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, GetModifiedSmoothTime(speedSmoothTime));
 
-        moveAmount = Vector3.SmoothDamp(moveAmount, targetMoveAmount, ref smoothMoveVelocity, smoothMoveTime);
+        velocityY += Time.deltaTime * gravity;
+        Vector3 velocity = transform.forward * currentSpeed + Vector3.up * velocityY;
+
+        controller.Move(velocity * Time.deltaTime);
+
+        if (controller.isGrounded)
+        {
+            velocityY = 0;
+        }
     }
 
-    void FixedUpdate()
+    private void Jump()
     {
-        rigidbody.AddForce(Vector3.up * gravity);
-        rigidbody.MovePosition(rigidbody.position + transform.TransformDirection(moveAmount) * Time.fixedDeltaTime);
+        if (controller.isGrounded)
+        {
+            float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
+            velocityY = jumpVelocity;
+        }
+    }
+
+    private float GetModifiedSmoothTime(float smoothTime)
+    {
+        if (controller.isGrounded)
+        {
+            return smoothTime;
+        }
+
+        if(airControlPercent == 0)
+        {
+            return float.MaxValue;
+        }
+        return smoothTime / airControlPercent;
     }
 }

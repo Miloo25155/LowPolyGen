@@ -7,6 +7,7 @@ public class MeshGenerator
     int xSize;
     int zSize;
     int resolution;
+    int baseHeight;
 
     float heightMultiplicator;
 
@@ -20,6 +21,7 @@ public class MeshGenerator
         this.zSize = settings.zSize;
         this.resolution = settings.resolution;
         this.heightMultiplicator = settings.heightMultiplicator;
+        this.baseHeight = settings.baseHeight;
 
         elevationMinMax = new MinMax();
         heightMap = Noise.GenerateNoiseMap(settings);
@@ -28,30 +30,35 @@ public class MeshGenerator
     public Mesh GenerateMesh(bool flatMesh)
     {
         //implement resolution here : equivalent to grid cell size
+        int xResSize = xSize / resolution;
+        int zResSize = zSize / resolution;
 
         float topLeftX = (xSize - 1) / -2f;
         float topLeftZ = (zSize - 1) / 2f;
 
-        MeshData meshData = new MeshData(xSize, zSize);
+        MeshData meshData = new MeshData(xResSize, zResSize);
 
         int vertexIndex = 0;
-        for (int z = 0; z < zSize; z ++)
+        for (int z = 0; z < xResSize; z++)
         {
-            for (int x = 0; x < xSize; x ++)
+            for (int x = 0; x < zResSize; x++)
             {
-                Vector3 point = new Vector3(topLeftX + x, 0, topLeftZ - z);
-                float noiseValue = flatMesh ? 0 : heightMap[x, z] * heightMultiplicator;
-                point.y = noiseValue;
+                int xRes = x * resolution;
+                int zRes = z * resolution;
 
-                elevationMinMax.AddValue(noiseValue);
+                Vector3 point = new Vector3(topLeftX + xRes, 0, topLeftZ - zRes);
+                float noiseValue = flatMesh ? 0 : heightMap[xRes, zRes] * heightMultiplicator;
+                point.y = noiseValue + baseHeight;
+
+                elevationMinMax.AddValue(point.y);
 
                 meshData.vertices[vertexIndex] = point;
-                meshData.uvs[vertexIndex] = new Vector2(x / (float)xSize, z / (float)zSize);
+                meshData.uvs[vertexIndex] = new Vector2(xRes / (float)xSize, zRes / (float)zSize);
 
-                if(x < xSize - 1 && z < zSize - 1)
+                if(x < xResSize - 1 && z < zResSize - 1)
                 {
-                    meshData.AddTriangles(vertexIndex, vertexIndex + xSize + 1, vertexIndex + xSize);
-                    meshData.AddTriangles(vertexIndex + xSize + 1, vertexIndex, vertexIndex + 1);
+                    meshData.AddTriangles(vertexIndex, vertexIndex + xResSize + 1, vertexIndex + xResSize);
+                    meshData.AddTriangles(vertexIndex + xResSize + 1, vertexIndex, vertexIndex + 1);
                 }
 
                 vertexIndex++;

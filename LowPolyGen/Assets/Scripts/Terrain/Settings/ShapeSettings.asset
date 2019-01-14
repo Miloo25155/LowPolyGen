@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2c3b0829c67c304e918c7d3e8179f54, type: 3}
   m_Name: ShapeSettings
   m_EditorClassIdentifier: 
-  xSize: 105
-  zSize: 105
-  resolution: 1
+  xSize: 300
+  zSize: 300
+  baseHeight: 0
+  resolution: 3
   flatMesh: 0
   flatShading: 1
-  heightMultiplicator: 32.67
+  heightMultiplicator: 80
   noiseSettings:
-    scale: 53
-    octaves: 10
-    lacunarity: 4
-    persistence: 0.13
+    scale: 94.4
+    octaves: 8
+    lacunarity: 3.44
+    persistence: 0.127
