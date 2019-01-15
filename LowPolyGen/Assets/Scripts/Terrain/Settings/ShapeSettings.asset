@@ -12,15 +12,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2c3b0829c67c304e918c7d3e8179f54, type: 3}
   m_Name: ShapeSettings
   m_EditorClassIdentifier: 
-  xSize: 300
-  zSize: 300
-  baseHeight: 0
   resolution: 3
   flatMesh: 0
   flatShading: 1
   heightMultiplicator: 80
+  heightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0.7690824
+      outSlope: 0.7690824
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.4994158
+      value: 0.3840919
+      inSlope: 1.3490198
+      outSlope: 1.3490198
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.1077802
+      outWeight: 0.22472194
+    - serializedVersion: 3
+      time: 0.84577256
+      value: 0.7023415
+      inSlope: 1.9464712
+      outSlope: 1.9464712
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.22160752
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1.9299971
+      outSlope: 1.9299971
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   noiseSettings:
-    scale: 94.4
+    scale: 24
     octaves: 8
-    lacunarity: 3.44
-    persistence: 0.127
+    lacunarity: 3.71
+    persistence: 0.119

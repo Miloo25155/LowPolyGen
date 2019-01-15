@@ -12,13 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2c3b0829c67c304e918c7d3e8179f54, type: 3}
   m_Name: WaterShapeSettings
   m_EditorClassIdentifier: 
-  xSize: 300
-  zSize: 300
-  baseHeight: 27
   resolution: 3
   flatMesh: 1
   flatShading: 1
   heightMultiplicator: 10
+  heightCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   noiseSettings:
     scale: 1
     octaves: 1

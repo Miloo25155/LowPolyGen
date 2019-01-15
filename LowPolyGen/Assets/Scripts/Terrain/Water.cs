@@ -14,12 +14,16 @@ public class Water : MonoBehaviour
 
     MeshFilter meshFilter;
     MeshRenderer meshRenderer;
+    MeshData meshData;
     Mesh mesh;
     MeshCollider meshCollider;
 
-    MeshGenerator meshGenerator = new MeshGenerator();
-
     public int trianglesLenght;
+
+    void Start()
+    {
+        GenerateWater();
+    }
 
     private void Initialize()
     {
@@ -42,8 +46,6 @@ public class Water : MonoBehaviour
             meshCollider = gameObject.AddComponent<MeshCollider>();
         }
         #endregion
-
-        meshGenerator.UpdateMeshSettings(shapeSettings);
     }
 
     public void GenerateWater()
@@ -54,11 +56,13 @@ public class Water : MonoBehaviour
 
     public void GenerateMesh()
     {
-        mesh = meshGenerator.GenerateMesh(shapeSettings.flatMesh);
+        meshData = MeshDataGenerator.GenerateFlatMeshData(TerrainGenerator.chunkSize, shapeSettings.resolution);
+
+        mesh = meshData.CreateMesh();
 
         if (shapeSettings.flatShading)
         {
-            ConstructFlatShadedMesh();
+            mesh = MeshGenerator.ConstructFlatShadedMesh(mesh);
         }
 
         meshFilter.sharedMesh = mesh;
@@ -82,30 +86,6 @@ public class Water : MonoBehaviour
     {
         Initialize();
         GenerateSurface();
-    }
-
-    private void ConstructFlatShadedMesh()
-    {
-        int triLength = mesh.triangles.Length;
-
-        Vector3[] vertices = mesh.vertices;
-        int[] triangles = mesh.triangles;
-        Vector2[] uvs = mesh.uv;
-
-        Vector3[] flatVertices = new Vector3[triLength];
-        Vector2[] flatUvs = new Vector2[triLength];
-
-        for (int i = 0; i < triLength; i++)
-        {
-            flatVertices[i] = vertices[triangles[i]];
-            flatUvs[i] = uvs[triangles[i]];
-            triangles[i] = i;
-        }
-
-        mesh.vertices = flatVertices;
-        mesh.triangles = triangles;
-        mesh.uv = flatUvs;
-        mesh.RecalculateNormals();
     }
 
     public void ClearWater()
