@@ -62,7 +62,7 @@ public class Water : MonoBehaviour
 
         if (shapeSettings.flatShading)
         {
-            mesh = MeshGenerator.ConstructFlatShadedMesh(mesh);
+            meshData = MeshDataGenerator.ConstructFlatShadedMeshData(meshData);
         }
 
         meshFilter.sharedMesh = mesh;

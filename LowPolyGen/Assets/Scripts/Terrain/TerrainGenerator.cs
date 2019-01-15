@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using System.Threading;
 
 public class TerrainGenerator : MonoBehaviour
 {
@@ -24,22 +26,111 @@ public class TerrainGenerator : MonoBehaviour
     Mesh mesh;
     MeshCollider meshCollider;
 
-    ColorGenerator colorGenerator = new ColorGenerator();
+    [HideInInspector]
+    public ColorGenerator colorGenerator;
 
     public int trianglesLenght;
 
-    MinMax elevationMinMax;
+
+    Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
+    Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
     void Start()
     {
-        GenerateTerrain();
+        //GenerateTerrain();
+    }
+
+    public void RequestMapData(Action<MapData> callback)
+    {
+        ThreadStart threadStart = delegate
+        {
+            MapDataThread(callback);
+        };
+
+        new Thread(threadStart).Start();
+    }
+
+    void MapDataThread(Action<MapData> callback)
+    {
+        MapData mapData = GetMapData();
+        lock (mapDataThreadInfoQueue)
+        {
+            mapDataThreadInfoQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
+        }
+    }
+
+
+    public void RequestMeshData(MapData mapData, Action<MeshData> callback)
+    {
+        ThreadStart threadStart = delegate
+        {
+            MeshDataThread(mapData, callback);
+        };
+
+        new Thread(threadStart).Start();
+    }
+
+    void MeshDataThread(MapData mapData, Action<MeshData> callback)
+    {
+        MeshData meshData = GetMeshData(mapData);
+        lock (meshDataThreadInfoQueue)
+        {
+            meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
+        }
+    }
+
+
+    private void Update()
+    {
+        if(mapDataThreadInfoQueue.Count > 0)
+        {
+            for (int i = 0; i < mapDataThreadInfoQueue.Count; i++)
+            {
+                MapThreadInfo<MapData> threadInfo = mapDataThreadInfoQueue.Dequeue();
+                threadInfo.callback(threadInfo.parameter);
+            }
+        }
+
+        if (meshDataThreadInfoQueue.Count > 0)
+        {
+            for (int i = 0; i < meshDataThreadInfoQueue.Count; i++)
+            {
+                MapThreadInfo<MeshData> threadInfo = meshDataThreadInfoQueue.Dequeue();
+                threadInfo.callback(threadInfo.parameter);
+            }
+        }
+    }
+
+    private MeshData GetMeshData(MapData mapData)
+    {
+        MeshData meshData = MeshDataGenerator.GenerateMeshDataFromHeightMap(chunkSize, mapData.heightMap, shapeSettings);
+
+        if (shapeSettings.flatShading)
+        {
+            meshData = MeshDataGenerator.ConstructFlatShadedMeshData(meshData);
+        }
+
+        return meshData;
+    }
+
+    private MapData GetMapData()
+    {
+        float[,] heightMap = noiseMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, offset);
+        return new MapData(heightMap);
+    }
+
+    public void GenerateTerrain()
+    {
+        Initialize();
+        GenerateMesh();
+        GenerateColors();
     }
 
     private void Initialize()
     {
         #region Init mesh components
         meshFilter = GetComponent<MeshFilter>();
-        if(meshFilter == null)
+        if (meshFilter == null)
         {
             meshFilter = gameObject.AddComponent<MeshFilter>();
         }
@@ -57,31 +148,21 @@ public class TerrainGenerator : MonoBehaviour
         }
         #endregion
 
+        colorGenerator = new ColorGenerator();
         colorGenerator.UpdateColorSettings(colorSettings);
 
         noiseMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, offset);
-
-        elevationMinMax = new MinMax();
     }
 
-    public void GenerateTerrain()
+    private void GenerateMesh()
     {
-        Initialize();
-        GenerateMesh();
-        GenerateColors();
-    }
+        noiseMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, offset);
+        MapData mapData = new MapData(noiseMap);
 
-    public void GenerateMesh()
-    {
-        meshData = MeshDataGenerator.GenerateFlatMeshData(chunkSize, shapeSettings.resolution);
-        mesh = MeshGenerator.GenerateTerrain(meshData, noiseMap, shapeSettings, ref elevationMinMax);
+        meshData = GetMeshData(mapData);
+        colorGenerator.UpdateElevation(meshData.elevationMinMax);
 
-        if (shapeSettings.flatShading)
-        {
-            mesh = MeshGenerator.ConstructFlatShadedMesh(mesh);
-        }
-
-        colorGenerator.UpdateElevation(elevationMinMax);
+        mesh = meshData.CreateMesh();
 
         meshFilter.sharedMesh = mesh;
         meshRenderer.sharedMaterial = colorSettings.material;
@@ -110,7 +191,19 @@ public class TerrainGenerator : MonoBehaviour
     public void ClearTerrain()
     {
         mesh = new Mesh();
-        meshFilter.sharedMesh = mesh;
-        meshCollider.sharedMesh = mesh;
+        Destroy(GetComponent<MeshRenderer>());
+        Destroy(GetComponent<MeshFilter>());
+    }
+
+    struct MapThreadInfo<T>
+    {
+        public readonly Action<T> callback;
+        public readonly T parameter;
+
+        public MapThreadInfo(Action<T> callback, T parameter)
+        {
+            this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
+            this.parameter = parameter;
+        }
     }
 }

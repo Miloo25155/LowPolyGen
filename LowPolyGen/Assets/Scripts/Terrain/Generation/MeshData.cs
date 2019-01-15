@@ -7,6 +7,7 @@ public class MeshData
     public Vector3[] vertices;
     public Vector2[] uvs;
     public int[] triangles;
+    public MinMax elevationMinMax;
 
     int triangleIndex;
 
@@ -17,6 +18,18 @@ public class MeshData
         triangles = new int[(xSize - 1) * (zSize - 1) * 6];
 
         triangleIndex = 0;
+
+        elevationMinMax = new MinMax();
+    }
+
+    public MeshData(Mesh mesh)
+    {
+        vertices = mesh.vertices;
+        uvs = mesh.uv;
+        triangles = mesh.triangles;
+
+        triangleIndex = 0;
+        elevationMinMax = new MinMax();
     }
 
     public void AddTriangles(int x, int y, int z)

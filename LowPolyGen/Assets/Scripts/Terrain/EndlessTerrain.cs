@@ -4,17 +4,23 @@ using UnityEngine;
 
 public class EndlessTerrain : MonoBehaviour
 {
-    public const float maxViewDist = 600;
+    public const float maxViewDist = 300;
     public Transform viewer;
 
     public static Vector2 viewerPosition;
+    static TerrainGenerator terrainGenerator;
     int chunkSize;
     int chunksVisibileInViewDist;
 
     Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
+    List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
 
     void Start()
     {
+        terrainGenerator = FindObjectOfType<TerrainGenerator>();
+        terrainGenerator.colorGenerator = new ColorGenerator();
+        terrainGenerator.colorGenerator.UpdateColorSettings(terrainGenerator.colorSettings);
+
         chunkSize = TerrainGenerator.chunkSize;
         chunksVisibileInViewDist = Mathf.RoundToInt(maxViewDist / chunkSize);
     }
@@ -27,6 +33,12 @@ public class EndlessTerrain : MonoBehaviour
 
     void UpdateVisibleChunks()
     {
+        for (int i = 0; i < terrainChunksVisibleLastUpdate.Count; i++)
+        {
+            terrainChunksVisibleLastUpdate[i].SetVisible(false);
+        }
+        terrainChunksVisibleLastUpdate.Clear();
+
         int currentChunkCoordX = Mathf.RoundToInt(viewerPosition.x / chunkSize);
         int currentChunkCoordY = Mathf.RoundToInt(viewerPosition.y / chunkSize);
 
@@ -39,10 +51,14 @@ public class EndlessTerrain : MonoBehaviour
                 if (terrainChunkDictionary.ContainsKey(viewedChunkCoord))
                 {
                     terrainChunkDictionary[viewedChunkCoord].UpdateTerrainChunk();
+                    if (terrainChunkDictionary[viewedChunkCoord].IsVisible())
+                    {
+                        terrainChunksVisibleLastUpdate.Add(terrainChunkDictionary[viewedChunkCoord]);
+                    }
                 }
                 else
                 {
-                    terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord, chunkSize));
+                    terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord, chunkSize, transform, terrainGenerator.colorSettings.material));
                 }
             }
         }
@@ -54,18 +70,44 @@ public class EndlessTerrain : MonoBehaviour
         Vector2 position;
         Bounds bounds;
 
-        public TerrainChunk(Vector2 coord, int size)
+        MeshRenderer meshRenderer;
+        MeshFilter meshFilter;
+        MeshCollider meshCollider;
+
+        public TerrainChunk(Vector2 coord, int size, Transform parent, Material terrainMaterial)
         {
             position = coord * size;
             Vector3 positionV3 = new Vector3(position.x, 0, position.y);
 
             bounds = new Bounds(position, Vector2.one * size);
 
-            meshObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            meshObject = new GameObject("Terrain chunk");
+
+            meshRenderer = meshObject.AddComponent<MeshRenderer>();
+            meshRenderer.material = terrainMaterial;
+
+            meshFilter = meshObject.AddComponent<MeshFilter>();
+
+            meshCollider = meshObject.AddComponent<MeshCollider>();
+
             meshObject.transform.position = positionV3;
-            meshObject.transform.localScale = Vector3.one * size / 10f;
+            meshObject.transform.parent = parent;
 
             SetVisible(false);
+
+            terrainGenerator.RequestMapData(OnMapDataReceived);
+        }
+        void OnMeshDataReceived(MeshData meshData)
+        {
+            Mesh mesh = meshData.CreateMesh();
+            meshFilter.mesh = mesh;
+            meshCollider.sharedMesh = mesh;
+            terrainGenerator.GenerateColors();
+        }
+
+        void OnMapDataReceived(MapData mapData)
+        {
+            terrainGenerator.RequestMeshData(mapData, OnMeshDataReceived);
         }
 
         public void UpdateTerrainChunk()
@@ -78,6 +120,11 @@ public class EndlessTerrain : MonoBehaviour
         public void SetVisible(bool visible)
         {
             meshObject.SetActive(visible);
+        }
+
+        public bool IsVisible()
+        {
+            return meshObject.activeSelf;
         }
     }
 }
