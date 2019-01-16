@@ -18,6 +18,8 @@ public class Water : MonoBehaviour
     Mesh mesh;
     MeshCollider meshCollider;
 
+    static TerrainEditorPreview terrainEditor;
+
     public int trianglesLenght;
 
     void Start()
@@ -27,6 +29,8 @@ public class Water : MonoBehaviour
 
     private void Initialize()
     {
+        terrainEditor = FindObjectOfType<TerrainEditorPreview>();
+
         #region Init mesh components
         meshFilter = GetComponent<MeshFilter>();
         if (meshFilter == null)
@@ -56,7 +60,7 @@ public class Water : MonoBehaviour
 
     public void GenerateMesh()
     {
-        meshData = MeshDataGenerator.GenerateFlatMeshData(TerrainGenerator.chunkSize, shapeSettings.resolution);
+        meshData = MeshDataGenerator.GenerateFlatMeshData(TerrainGenerator.chunkSize, terrainEditor.editorLevelOfDetail);
 
         mesh = meshData.CreateMesh();
 

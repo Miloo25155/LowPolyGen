@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-[CustomEditor(typeof(TerrainGenerator))]
-public class TerrainGeneratorEditor : Editor
+[CustomEditor(typeof(TerrainEditorPreview))]
+public class TerrainEditorPreviewEditor : Editor
 {
-    TerrainGenerator terrain;
+    TerrainEditorPreview terrain;
     Editor shapeEditor;
     Editor colorEditor;
 
@@ -62,6 +62,6 @@ public class TerrainGeneratorEditor : Editor
 
     private void OnEnable()
     {
-        terrain = (TerrainGenerator)target;
+        terrain = (TerrainEditorPreview)target;
     }
 }

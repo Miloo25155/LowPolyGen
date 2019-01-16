@@ -6,80 +6,79 @@ using System.Threading;
 
 public class TerrainGenerator : MonoBehaviour
 {
-    public const int chunkSize = 240;
-
-    public int seed;
-    public Vector2 offset;
-    float[,] noiseMap;
+    public const int chunkSize = 241;
 
     public ShapeSettings shapeSettings;
     public ColorSettings colorSettings;
 
-    [HideInInspector]
-    public bool shapeSettingsFoldout;
-    [HideInInspector]
-    public bool colorSettingsFoldout;
-
-    MeshFilter meshFilter;
-    MeshRenderer meshRenderer;
-    MeshData meshData;
-    Mesh mesh;
-    MeshCollider meshCollider;
 
     [HideInInspector]
-    public ColorGenerator colorGenerator;
-
-    public int trianglesLenght;
+    public ColorGenerator colorGenerator = new ColorGenerator();
 
 
     Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
     Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
-    void Start()
+
+    public MeshData GetMeshData(MapData mapData, int lod)
     {
-        //GenerateTerrain();
+        MeshData meshData = MeshDataGenerator.GenerateMeshDataFromHeightMap(chunkSize, lod, mapData.heightMap, shapeSettings);
+
+        if (shapeSettings.flatShading)
+        {
+            meshData = MeshDataGenerator.ConstructFlatShadedMeshData(meshData);
+        }
+
+        return meshData;
+    }
+    public MapData GetMapData(Vector2 center, int seed, Vector2 offset)
+    {
+        float[,] heightMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, center + offset);
+        return new MapData(heightMap);
     }
 
-    public void RequestMapData(Action<MapData> callback)
+
+    public void RequestMapData(Vector2 center, int seed, Vector2 offset, Action<MapData> callback)
     {
         ThreadStart threadStart = delegate
         {
-            MapDataThread(callback);
+            MapDataThread(center, seed, offset, callback);
+        };
+
+        new Thread(threadStart).Start();
+    }
+    public void RequestMeshData(MapData mapData, int lod, Action<MeshData> callback)
+    {
+        ThreadStart threadStart = delegate
+        {
+            MeshDataThread(mapData, lod, callback);
         };
 
         new Thread(threadStart).Start();
     }
 
-    void MapDataThread(Action<MapData> callback)
+
+    void MapDataThread(Vector2 center, int seed, Vector2 offset, Action<MapData> callback)
     {
-        MapData mapData = GetMapData();
+        MapData mapData = GetMapData(center, seed, offset);
         lock (mapDataThreadInfoQueue)
         {
             mapDataThreadInfoQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
         }
     }
-
-
-    public void RequestMeshData(MapData mapData, Action<MeshData> callback)
+    void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback)
     {
-        ThreadStart threadStart = delegate
-        {
-            MeshDataThread(mapData, callback);
-        };
-
-        new Thread(threadStart).Start();
-    }
-
-    void MeshDataThread(MapData mapData, Action<MeshData> callback)
-    {
-        MeshData meshData = GetMeshData(mapData);
+        MeshData meshData = GetMeshData(mapData, lod);
         lock (meshDataThreadInfoQueue)
         {
             meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
         }
     }
 
-
+    private void Start()
+    {
+        colorGenerator.UpdateColorSettings(colorSettings);
+    }
     private void Update()
     {
         if(mapDataThreadInfoQueue.Count > 0)
@@ -101,98 +100,9 @@ public class TerrainGenerator : MonoBehaviour
         }
     }
 
-    private MeshData GetMeshData(MapData mapData)
-    {
-        MeshData meshData = MeshDataGenerator.GenerateMeshDataFromHeightMap(chunkSize, mapData.heightMap, shapeSettings);
-
-        if (shapeSettings.flatShading)
-        {
-            meshData = MeshDataGenerator.ConstructFlatShadedMeshData(meshData);
-        }
-
-        return meshData;
-    }
-
-    private MapData GetMapData()
-    {
-        float[,] heightMap = noiseMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, offset);
-        return new MapData(heightMap);
-    }
-
-    public void GenerateTerrain()
-    {
-        Initialize();
-        GenerateMesh();
-        GenerateColors();
-    }
-
-    private void Initialize()
-    {
-        #region Init mesh components
-        meshFilter = GetComponent<MeshFilter>();
-        if (meshFilter == null)
-        {
-            meshFilter = gameObject.AddComponent<MeshFilter>();
-        }
-
-        meshRenderer = GetComponent<MeshRenderer>();
-        if (meshRenderer == null)
-        {
-            meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        }
-
-        meshCollider = GetComponent<MeshCollider>();
-        if (meshCollider == null)
-        {
-            meshCollider = gameObject.AddComponent<MeshCollider>();
-        }
-        #endregion
-
-        colorGenerator = new ColorGenerator();
-        colorGenerator.UpdateColorSettings(colorSettings);
-
-        noiseMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, offset);
-    }
-
-    private void GenerateMesh()
-    {
-        noiseMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, offset);
-        MapData mapData = new MapData(noiseMap);
-
-        meshData = GetMeshData(mapData);
-        colorGenerator.UpdateElevation(meshData.elevationMinMax);
-
-        mesh = meshData.CreateMesh();
-
-        meshFilter.sharedMesh = mesh;
-        meshRenderer.sharedMaterial = colorSettings.material;
-        meshCollider.sharedMesh = mesh;
-
-        trianglesLenght = mesh.triangles.Length;
-    }
-
     public void GenerateColors()
     {
         colorGenerator.UpdateColors();
-    }
-
-    public void OnShapeSettingsUpdated()
-    {
-        Initialize();
-        GenerateMesh();
-    }
-
-    public void OnColorSettingsUpdated()
-    {
-        Initialize();
-        GenerateColors();
-    }
-
-    public void ClearTerrain()
-    {
-        mesh = new Mesh();
-        Destroy(GetComponent<MeshRenderer>());
-        Destroy(GetComponent<MeshFilter>());
     }
 
     struct MapThreadInfo<T>

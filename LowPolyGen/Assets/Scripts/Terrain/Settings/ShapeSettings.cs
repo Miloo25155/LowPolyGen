@@ -5,9 +5,6 @@ using UnityEngine;
 [CreateAssetMenu()]
 public class ShapeSettings : ScriptableObject
 {
-    [Range(3, 10)]
-    public int resolution = 3;
-
     public bool flatMesh = false;
     public bool flatShading = false;
     public float heightMultiplicator = 10;

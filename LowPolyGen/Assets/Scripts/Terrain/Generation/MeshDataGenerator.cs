@@ -4,32 +4,33 @@ using UnityEngine;
 
 public static class MeshDataGenerator
 {
-    public static MeshData GenerateFlatMeshData(int chunkSize, int resolution)
-    {
-        int chunkSizeResolution = chunkSize / resolution;
+    public static int baseLevelOfDetail = 3;
 
+    public static MeshData GenerateFlatMeshData(int chunkSize, int levelOfDetail)
+    {
         float topLeftX = (chunkSize - 1) / -2f;
         float topLeftZ = (chunkSize - 1) / 2f;
 
-        MeshData meshData = new MeshData(chunkSizeResolution, chunkSizeResolution);
+        int meshSimplificationIncrement = levelOfDetail + baseLevelOfDetail;
+
+        int verticesPerLine = (chunkSize - 1) / meshSimplificationIncrement + 1;
+
+        MeshData meshData = new MeshData(verticesPerLine, verticesPerLine);
 
         int vertexIndex = 0;
-        for (int z = 0; z < chunkSizeResolution; z++)
+        for (int z = 0; z < chunkSize; z += meshSimplificationIncrement)
         {
-            for (int x = 0; x < chunkSizeResolution; x++)
+            for (int x = 0; x < chunkSize; x += meshSimplificationIncrement)
             {
-                int xRes = x * resolution;
-                int zRes = z * resolution;
-
-                Vector3 point = new Vector3(topLeftX + xRes, 0, topLeftZ - zRes);
+                Vector3 point = new Vector3(topLeftX + x, 0, topLeftZ - z);
 
                 meshData.vertices[vertexIndex] = point;
-                meshData.uvs[vertexIndex] = new Vector2(xRes / (float)chunkSize, zRes / (float)chunkSize);
+                meshData.uvs[vertexIndex] = new Vector2(x / (float)chunkSize, z / (float)chunkSize);
 
-                if (x < chunkSizeResolution - 1 && z < chunkSizeResolution - 1)
+                if (x < chunkSize - 1 && z < chunkSize - 1)
                 {
-                    meshData.AddTriangles(vertexIndex, vertexIndex + chunkSizeResolution + 1, vertexIndex + chunkSizeResolution);
-                    meshData.AddTriangles(vertexIndex + chunkSizeResolution + 1, vertexIndex, vertexIndex + 1);
+                    meshData.AddTriangles(vertexIndex, vertexIndex + verticesPerLine + 1, vertexIndex + verticesPerLine);
+                    meshData.AddTriangles(vertexIndex + verticesPerLine + 1, vertexIndex, vertexIndex + 1);
                 }
 
                 vertexIndex++;
@@ -39,39 +40,37 @@ public static class MeshDataGenerator
         return meshData;
     }
 
-    public static MeshData GenerateMeshDataFromHeightMap(int chunkSize, float[,] noiseMap, ShapeSettings settings)
+    public static MeshData GenerateMeshDataFromHeightMap(int chunkSize, int levelOfDetail, float[,] noiseMap, ShapeSettings settings)
     {
-        int resolution = settings.resolution;
-        int chunkSizeResolution = chunkSize / resolution;
-
         float topLeftX = (chunkSize - 1) / -2f;
         float topLeftZ = (chunkSize - 1) / 2f;
 
-        MeshData meshData = new MeshData(chunkSizeResolution, chunkSizeResolution);
+        int meshSimplificationIncrement =  levelOfDetail + baseLevelOfDetail;
+
+        int verticesPerLine = (chunkSize - 1) / meshSimplificationIncrement + 1;
+
+        MeshData meshData = new MeshData(verticesPerLine, verticesPerLine);
 
         float heightMultiplicator = settings.heightMultiplicator;
         AnimationCurve heightCurve = new AnimationCurve(settings.heightCurve.keys);
 
         int vertexIndex = 0;
-        for (int z = 0; z < chunkSizeResolution; z++)
+        for (int z = 0; z < chunkSize; z += meshSimplificationIncrement)
         {
-            for (int x = 0; x < chunkSizeResolution; x++)
+            for (int x = 0; x < chunkSize; x += meshSimplificationIncrement)
             {
-                int xRes = x * resolution;
-                int zRes = z * resolution;
-
                 float noiseValue = heightCurve.Evaluate(noiseMap[x, z]) * heightMultiplicator;
-                Vector3 point = new Vector3(topLeftX + xRes, noiseValue, topLeftZ - zRes);
+                Vector3 point = new Vector3(topLeftX + x, noiseValue, topLeftZ - z);
 
                 meshData.elevationMinMax.AddValue(noiseValue);
 
                 meshData.vertices[vertexIndex] = point;
-                meshData.uvs[vertexIndex] = new Vector2(xRes / (float)chunkSize, zRes / (float)chunkSize);
+                meshData.uvs[vertexIndex] = new Vector2(x / (float)chunkSize, z / (float)chunkSize);
 
-                if (x < chunkSizeResolution - 1 && z < chunkSizeResolution - 1)
+                if (x < chunkSize - 1 && z < chunkSize - 1)
                 {
-                    meshData.AddTriangles(vertexIndex, vertexIndex + chunkSizeResolution + 1, vertexIndex + chunkSizeResolution);
-                    meshData.AddTriangles(vertexIndex + chunkSizeResolution + 1, vertexIndex, vertexIndex + 1);
+                    meshData.AddTriangles(vertexIndex, vertexIndex + verticesPerLine + 1, vertexIndex + verticesPerLine);
+                    meshData.AddTriangles(vertexIndex + verticesPerLine + 1, vertexIndex, vertexIndex + 1);
                 }
 
                 vertexIndex++;
