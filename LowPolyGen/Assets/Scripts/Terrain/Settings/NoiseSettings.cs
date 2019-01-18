@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class NoiseSettings
 {
-    [Range(15, 200)]
+    [Range(15, 450)]
     public float scale = 1;
     [Range(1, 8)]
     public int octaves = 1;

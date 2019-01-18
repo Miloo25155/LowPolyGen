@@ -57,8 +57,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   noiseSettings:
-    scale: 160
+    scale: 175
     octaves: 8
     lacunarity: 2.25
     persistence: 0.205
-    globalAttenuationFactor: 0.8
+    globalAttenuationFactor: 0.721
