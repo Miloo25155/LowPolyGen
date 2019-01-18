@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2c3b0829c67c304e918c7d3e8179f54, type: 3}
   m_Name: ShapeSettings
   m_EditorClassIdentifier: 
-  flatMesh: 0
   flatShading: 1
-  heightMultiplicator: 80
+  heightMultiplicator: 150
   heightCurve:
     serializedVersion: 2
     m_Curve:
@@ -58,7 +57,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   noiseSettings:
-    scale: 200
+    scale: 160
     octaves: 8
     lacunarity: 2.25
     persistence: 0.205
+    globalAttenuationFactor: 0.8

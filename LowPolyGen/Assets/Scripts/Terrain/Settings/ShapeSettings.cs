@@ -5,7 +5,6 @@ using UnityEngine;
 [CreateAssetMenu()]
 public class ShapeSettings : ScriptableObject
 {
-    public bool flatMesh = false;
     public bool flatShading = false;
     public float heightMultiplicator = 10;
     public AnimationCurve heightCurve;

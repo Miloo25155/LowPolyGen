@@ -8,6 +8,8 @@ public class TerrainGenerator : MonoBehaviour
 {
     public const int chunkSize = 241;
 
+    public Noise.NormalizeMode normalizeMode;
+
     public ShapeSettings shapeSettings;
     public ColorSettings colorSettings;
 
@@ -33,7 +35,7 @@ public class TerrainGenerator : MonoBehaviour
     }
     public MapData GetMapData(Vector2 center, int seed, Vector2 offset)
     {
-        float[,] heightMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, center + offset);
+        float[,] heightMap = Noise.GenerateNoiseMap(chunkSize, shapeSettings, seed, center + offset, normalizeMode);
         return new MapData(heightMap);
     }
 

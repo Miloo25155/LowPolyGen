@@ -8,6 +8,10 @@ public class TerrainEditorPreview: MonoBehaviour
     public Vector2 offset;
     [Range(0, 6)]
     public int editorLevelOfDetail;
+
+    public Noise.NormalizeMode normalizeMode;
+    public float globalAttenuationFactor;
+
     float[,] noiseMapEditor;
 
     MeshFilter meshFilterEditor;
@@ -65,12 +69,11 @@ public class TerrainEditorPreview: MonoBehaviour
         }
         #endregion
 
-        noiseMapEditor = Noise.GenerateNoiseMap(TerrainGenerator.chunkSize, shapeSettings, seed, offset);
+        noiseMapEditor = Noise.GenerateNoiseMap(TerrainGenerator.chunkSize, shapeSettings, seed, offset, normalizeMode);
     }
 
     private void GenerateMesh()
     {
-        noiseMapEditor = Noise.GenerateNoiseMap(TerrainGenerator.chunkSize, shapeSettings, seed, offset);
         MapData mapData = new MapData(noiseMapEditor);
 
         meshDataEditor = terrainGenerator.GetMeshData(mapData, editorLevelOfDetail);

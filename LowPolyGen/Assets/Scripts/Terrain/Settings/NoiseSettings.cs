@@ -13,4 +13,7 @@ public class NoiseSettings
     public float lacunarity = 2f;
     [Range(0, 1)]
     public float persistence = 0.5f;
+
+    [Range(0.2f, 2)]
+    public float globalAttenuationFactor = 1.5f;
 }
